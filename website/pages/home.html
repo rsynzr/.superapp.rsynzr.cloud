@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SuperApp</title>
+</head>
+<body>
+
+<h1>SuperApp</h1>
+
+<label>Client Type:</label>
+<select id="clientType">
+    <option value="web">web</option>
+    <option value="desktop">desktop</option>
+    <option value="esp32">esp32</option>
+    <option value="admin">admin</option>
+</select>
+<br>
+<label>Device Name:</label>
+<input id="deviceName" placeholder="Device Name" value="Browser Client">
+<br>
+<label>Command / Pesan:</label>
+<input id="msg" placeholder="Ketik pesan atau perintah">
+<br>
+<button onclick="sendSOS()">Kirim SOS</button>
+<button onclick="sendMorse()">Kirim Morse</button>
+<button onclick="sendDeviceCommand()">Kirim Device Command</button>
+<button onclick="requestRegistry()">Refresh Registry</button>
+
+<div id="log" style="max-height: 380px; overflow-y: auto; border: 1px solid #ccc; padding: 8px; margin-top: 12px;"></div>
+
+<script>
+const log = document.getElementById("log");
+const msgInput = document.getElementById("msg");
+const clientTypeInput = document.getElementById("clientType");
+const deviceNameInput = document.getElementById("deviceName");
+
+let ws;
+let clientId;
+
+function appendLog(message) {
+    log.innerHTML += `<p>${message}</p>`;
+    log.scrollTop = log.scrollHeight;
+}
+
+function connect() {
+    ws = new WebSocket("ws://localhost:3000");
+
+    ws.onopen = () => {
+        appendLog("Terhubung ke server");
+        ws.send(JSON.stringify({
+            type: "register",
+            clientType: clientTypeInput.value || "web",
+            deviceName: deviceNameInput.value || "Browser Client"
+        }));
+    };
+
+    ws.onmessage = (event) => {
+        let payload;
+        try {
+            payload = JSON.parse(event.data);
+        } catch (error) {
+            appendLog(`Pesan tidak valid: ${event.data}`);
+            return;
+        }
+
+        if (payload.type === "registered") {
+            clientId = payload.clientId;
+            appendLog(`Terdaftar sebagai ${clientId}`);
+            return;
+        }
+
+        if (payload.type === "registry") {
+            appendLog(`Registry diperbarui: ${JSON.stringify(payload.clients)}`);
+            return;
+        }
+
+        if (payload.type === "event") {
+            appendLog(`Event diterima: ${payload.module}/${payload.action} from=${payload.from}`);
+            return;
+        }
+
+        appendLog(`Server: ${JSON.stringify(payload)}`);
+    };
+
+    ws.onclose = () => {
+        appendLog("Koneksi terputus, mencoba reconnect dalam 2 detik...");
+        setTimeout(connect, 2000);
+    };
+
+    ws.onerror = (error) => {
+        appendLog(`WebSocket error: ${error.message}`);
+    };
+}
+
+function sendEvent(payload) {
+    if (!ws || ws.readyState !== WebSocket.OPEN) {
+        appendLog("WebSocket belum terhubung");
+        return;
+    }
+
+    ws.send(JSON.stringify(payload));
+    appendLog(`Kirim event: ${JSON.stringify(payload)}`);
+}
+
+function sendSOS() {
+    const msg = msgInput.value;
+    if (!msg) {
+        appendLog("Isi pesan SOS dulu");
+        return;
+    }
+
+    sendEvent({
+        module: "sos",
+        action: "trigger",
+        target: "all",
+        data: { message: msg }
+    });
+}
+
+function sendMorse() {
+    const msg = msgInput.value;
+    if (!msg) {
+        appendLog("Isi teks Morse dulu");
+        return;
+    }
+
+    sendEvent({
+        module: "morse",
+        action: "send",
+        target: "all",
+        data: { text: msg }
+    });
+}
+
+function sendDeviceCommand() {
+    const msg = msgInput.value;
+    if (!msg) {
+        appendLog("Isi command device dulu");
+        return;
+    }
+
+    const target = prompt("Masukkan target device id atau 'all':", "all");
+    if (!target) {
+        appendLog("Target device dibatalkan");
+        return;
+    }
+
+    sendEvent({
+        module: "devices",
+        action: "command",
+        target,
+        data: { command: msg }
+    });
+}
+
+function requestRegistry() {
+    if (!ws || ws.readyState !== WebSocket.OPEN) {
+        appendLog("WebSocket belum terhubung");
+        return;
+    }
+
+    ws.send(JSON.stringify({ type: "getRegistry" }));
+}
+
+connect();
+</script>
+
+</body>
+</html>
