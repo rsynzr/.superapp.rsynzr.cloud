@@ -1,0 +1,3 @@
+[submodule "website/pages"]
+	path = website/pages
+	url = https://github.com/rsynzr/pages.git
