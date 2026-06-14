@@ -1,0 +1,22 @@
+Domain:
+example.com
+
+Subdomain:
+ws.example.com
+
+Environment:
+API_KEY=
+JWT_SECRET=
+
+Deploy:
+1. Install Wrangler
+2. Login Cloudflare
+3. Deploy Worker
+
+WebSocket:
+- Gunakan Cloudflare Workers dengan Durable Objects untuk menjaga sesi WebSocket.
+- Pastikan endpoint WebSocket berada di subdomain atau route yang tepat.
+
+DNS:
+- Tambahkan CNAME atau A record untuk ws.example.com ke Cloudflare.
+- Aktifkan proxied (jika diperlukan) untuk domain utama.

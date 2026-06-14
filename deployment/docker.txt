@@ -1,0 +1,11 @@
+Install:
+1. Pastikan Docker terpasang.
+2. Buat Dockerfile dan docker-compose jika diperlukan.
+
+Run:
+1. docker build -t superapp .
+2. docker run -p 3000:3000 superapp
+
+Catatan:
+- Gunakan port 3000 untuk backend Node.js.
+- Volume dapat dipetakan untuk pengembangan live reload.

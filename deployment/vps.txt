@@ -1,0 +1,12 @@
+Install:
+1. Pasang Node.js versi terbaru.
+2. Clone repositori ke server.
+3. Jalankan npm install.
+
+Run:
+1. npm run start
+2. Gunakan process manager seperti PM2 atau systemd untuk menjaga server berjalan.
+
+Catatan:
+- Pastikan port 3000 terbuka.
+- Konfigurasikan reverse proxy (Nginx atau Apache) jika diperlukan.
